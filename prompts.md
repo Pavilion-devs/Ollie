@@ -161,40 +161,76 @@ Return 401 for missing token, 403 for rejected verification, 200 for success.
 
 ---
 
-## Prompt 6: Demo UI - Layout (1:40)
+## Prompt 6: Landing Page + Demo UI (1:40)
 
 ```
-Update src/app/page.tsx to create the AgentAuth demo UI.
+I have a reference HTML template at high-performanc-71.aura.build-content.html in the repo root. Extract the styling and create a landing page + demo for AgentAuth.
 
-Structure:
-1. Header: "AgentAuth" title + tagline "Verifiable delegated authority for AI agents"
+Use these exact styles from the template:
+- Light theme with white background
+- Emerald green accents (#10b981, emerald-500/600)
+- Inter font for body, JetBrains Mono for code/labels
+- Gradient bordered cards (from-neutral-200 to-neutral-300)
+- Input styling with .input-base pattern
+- The grid background pattern (.bg-grid-pattern)
 
-2. Two-column layout (stack on mobile):
+Page Structure:
 
-   LEFT COLUMN - "1. Authorize Agent"
-   - Form with fields:
-     - Principal (user ID) - text input, default "user_123"
-     - Agent ID - text input, default "agent_shopping_assistant"
-     - Scope - text input, default "cloud_purchase"
-     - Spending Limit - number input, default 50
-     - Expires in (minutes) - number input, default 60
-   - "Generate Token" button
-   - Result area showing the generated token (scrollable, monospace)
+1. NAVIGATION (fixed top)
+   - Left: Black square logo + "AGENTAUTH" text
+   - Right: "Try Demo" button with emerald dot indicator
 
-   RIGHT COLUMN - "2. Agent Action (Merchant)"
-   - Form with fields:
-     - Token - textarea (paste or auto-filled from step 1)
-     - Item - text input, default "Cloud Credits"
-     - Amount - number input, default 20
-     - Scope - text input, default "cloud_purchase"
-   - "Attempt Purchase" button
-   - Result area showing success (green) or rejection (red with reason)
+2. HERO SECTION
+   - Small badge: "AI Build-Off 2025" with pulsing emerald dot
+   - Main headline: "Trust, But Verify."
+   - Subheadline in lighter gray: "Delegated authority for AI agents"
+   - Description: "In a world where AI agents act autonomously, merchants need to verify: who authorized this? what's the limit? who's liable? AgentAuth answers all three."
+   - Two CTA buttons:
+     - Primary (dark): "AUTHORIZE AN AGENT" - scrolls to demo section
+     - Secondary (light with border): "VIEW DOCS" - placeholder link
 
-3. Footer: "Built for AI Build-Off 2025"
+3. STATS BAR (like the template)
+   - 4 columns showing:
+     - "JWT Signed" / "Industry Standard"
+     - "< 10ms" / "Verification Time"
+     - "Scope-Based" / "Fine-Grained Control"
+     - "Open Source" / "MIT Licensed"
 
-Use Tailwind for styling. Make it clean and professional - dark theme preferred.
-Add loading states for the buttons.
-Store the generated token in state so it can auto-fill the right side.
+4. HOW IT WORKS SECTION (3-step process like template)
+   - Step 01: "User Authorizes" - User grants agent specific permissions
+   - Step 02: "Agent Acts" - Agent carries signed token to merchant
+   - Step 03: "Merchant Verifies" - SDK validates scope, limits, expiry
+
+5. DEMO SECTION (id="demo") - This is the interactive part
+   - Section header: "See It In Action"
+   - Two-column card layout with gradient borders:
+
+   LEFT CARD - "1. Authorize Agent"
+   - Form fields (use the input-base styling):
+     - Principal (user ID) - default "user_123"
+     - Agent ID - default "agent_shopping_assistant"
+     - Scope - default "cloud_purchase"
+     - Spending Limit ($) - default 50
+     - Expires in (minutes) - default 60
+   - Dark "GENERATE TOKEN" button
+   - Result area: show generated JWT in monospace, scrollable box
+
+   RIGHT CARD - "2. Merchant Verification"
+   - Token textarea (auto-filled from left side)
+   - Item name - default "Cloud Credits"
+   - Amount ($) - default 20
+   - Required Scope - default "cloud_purchase"
+   - Dark "ATTEMPT PURCHASE" button
+   - Result area:
+     - Success: green background, checkmark, transaction details
+     - Failure: red background, X icon, rejection reason
+
+6. FOOTER
+   - "Built for AI Build-Off 2025"
+   - "AgentAuth © 2025"
+
+Make it responsive. Use the same animation classes from the template (animate-in, etc).
+Store generated token in React state to auto-fill the merchant side.
 ```
 
 ---
