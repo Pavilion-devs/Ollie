@@ -289,6 +289,102 @@ Help me deploy this Next.js app to Zeabur:
 
 ---
 
+## Prompt 10: AI-Powered Natural Language Authorization
+
+```
+Add an AI-powered natural language authorization feature to AgentAuth. Keep the existing form intact - the AI will parse natural language and auto-fill the form fields.
+
+1. Install OpenAI SDK:
+   npm install openai
+
+2. Create src/app/api/parse-authorization/route.ts:
+
+   POST /api/parse-authorization
+
+   Request body:
+   {
+     "description": "Let my shopping assistant spend up to $50 on cloud services for the next hour"
+   }
+
+   Response:
+   {
+     "success": true,
+     "parsed": {
+       "principal": "user_123",
+       "agent": "shopping_assistant",
+       "scope": ["cloud_purchase", "cloud_services"],
+       "limit": 50,
+       "currency": "USD",
+       "durationMinutes": 60
+     }
+   }
+
+   Implementation:
+   - Use OpenAI's gpt-4o-mini model (fast and cheap)
+   - Use environment variable OPENAI_API_KEY
+   - System prompt for the AI:
+
+   "You are an authorization parser for AgentAuth. Extract structured data from natural language authorization requests.
+
+   Return ONLY valid JSON with these fields:
+   - agent: string (the agent being authorized, e.g., 'shopping_assistant', 'email_bot')
+   - scope: string[] (permission scopes, e.g., ['cloud_purchase', 'email_read', 'email_send'])
+   - limit: number or null (spending limit if mentioned, null if not applicable)
+   - currency: string (default 'USD')
+   - durationMinutes: number (how long authorization lasts, default 60)
+
+   Examples:
+   Input: 'Let my shopping assistant spend up to $50 on cloud services for the next hour'
+   Output: {\"agent\": \"shopping_assistant\", \"scope\": [\"cloud_purchase\"], \"limit\": 50, \"currency\": \"USD\", \"durationMinutes\": 60}
+
+   Input: 'Allow email bot to read and send emails for 24 hours'
+   Output: {\"agent\": \"email_bot\", \"scope\": [\"email_read\", \"email_send\"], \"limit\": null, \"currency\": \"USD\", \"durationMinutes\": 1440}
+
+   Input: 'Give my analytics agent access to view reports'
+   Output: {\"agent\": \"analytics_agent\", \"scope\": [\"reports_view\"], \"limit\": null, \"currency\": \"USD\", \"durationMinutes\": 60}
+
+   Always return valid JSON only, no markdown or explanation."
+
+   - Handle errors gracefully, return { success: false, error: "message" }
+
+3. Update the UI (src/app/page.tsx):
+
+   Add a new section ABOVE the existing "1. Authorize Agent" form card:
+
+   Structure:
+   - A collapsible/expandable card titled "Quick Authorize with AI"
+   - Textarea (3-4 rows) with placeholder: "Describe authorization in plain English... e.g., 'Let my shopping assistant spend up to $50 on cloud services'"
+   - "Parse with AI" button with sparkle/magic icon
+   - Example quick-fill buttons below the textarea:
+     - "Shopping: $50 cloud"
+     - "Email: read & send"
+     - "Analytics: view reports"
+
+   Behavior:
+   - Clicking "Parse with AI":
+     - Shows loading state ("Parsing...")
+     - POSTs to /api/parse-authorization with the textarea content
+     - On success: auto-fill the form fields below (agent, scope, limit, etc.)
+     - Show indicator: "Parsed by AI - review and edit below"
+     - On error: show error message, user can fill manually
+
+   - Clicking example buttons:
+     - Fills textarea with that example text
+     - Automatically triggers the parse
+
+   Styling:
+   - Use emerald accent for the AI section to make it stand out
+   - Add subtle sparkle/AI icon
+   - Match existing gradient border card style
+   - Add a small "Powered by OpenAI" note at bottom of the AI section
+
+4. The existing form must still work independently - users can ignore the AI section and fill manually.
+
+5. After implementing, set OPENAI_API_KEY in environment variables (Zeabur dashboard for production).
+```
+
+---
+
 ## Emergency Prompts
 
 ### If JWT library has issues:
