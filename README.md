@@ -1,36 +1,194 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AgentAuth
 
-## Getting Started
+**Verifiable delegated authority for AI agents**
 
-First, run the development server:
+In a world where AI agents act autonomously, merchants need to verify: who authorized this? what's the limit? who's liable? AgentAuth answers all three with JWT-based signed tokens that encode permissions, spending limits, and expiration times.
+
+## What It Does
+
+AgentAuth enables users to grant AI agents specific, verifiable permissions to act on their behalf. Agents carry signed JWT tokens to merchants, who can verify:
+
+1. **Authorization** - Who granted permission (user principal)
+2. **Scope** - What actions are allowed (e.g., "cloud_purchase", "subscription")
+3. **Limits** - Maximum spending amount
+4. **Expiry** - Time-bound authorization
+5. **Integrity** - Cryptographically signed, tamper-proof
+
+## How It Works
+
+```
+┌─────────┐      ┌─────────┐      ┌──────────┐
+│  USER   │─────▶│  AGENT  │─────▶│ MERCHANT │
+│         │      │         │      │          │
+└─────────┘      └─────────┘      └──────────┘
+    │                                  │
+    │ 1. Authorize                     │ 3. Verify Token
+    │   - Set scopes                   │   - Check signature
+    │   - Set limits                   │   - Validate scope
+    │   - Get signed token             │   - Check amount <= limit
+    │                                  │   - Confirm not expired
+    └───────────┬──────────────────────┘
+                │
+           2. Agent carries
+              signed JWT token
+```
+
+## Quick Start
+
+### Installation
+
+```bash
+npm install
+```
+
+### Run Locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the demo.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Try the Demo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Authorize an Agent**
+   - Enter a user ID, agent ID, scope, and spending limit
+   - Click "Generate Token" to create a signed JWT
+   - Copy the token or use it directly in the merchant flow
 
-## Learn More
+2. **Merchant Verification**
+   - The token auto-fills in the merchant verification form
+   - Enter an item name and amount
+   - Click "Attempt Purchase" to see verification in action
+   - Try the preset buttons: "Try $20 ✓" (success) or "Try $100 ✗" (exceeds limit)
 
-To learn more about Next.js, take a look at the following resources:
+## Demo Flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+1. User authorizes agent with $50 limit for "cloud_purchase"
+   ↓
+2. Agent receives signed JWT token
+   ↓
+3. Agent attempts $20 purchase → ✓ Approved
+4. Agent attempts $100 purchase → ✗ Rejected (exceeds $50 limit)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API Endpoints
 
-## Deploy on Vercel
+### POST /api/authorize
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Generate a signed authorization token for an agent.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Request:**
+```json
+{
+  "principal": "user_123",
+  "agent": "agent_shopping_assistant",
+  "scope": ["cloud_purchase"],
+  "limit": 50,
+  "currency": "USD",
+  "expiresInMinutes": 60
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "payload": {
+    "principal": "user_123",
+    "agent": "agent_shopping_assistant",
+    "scope": ["cloud_purchase"],
+    "limit": 50,
+    "currency": "USD",
+    "expiresAt": "2025-01-02T23:00:00.000Z",
+    "issuedAt": "2025-01-02T22:00:00.000Z",
+    "issuer": "AgentAuth"
+  }
+}
+```
+
+### POST /api/purchase
+
+Verify a token and process a purchase request.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Request:**
+```json
+{
+  "item": "Cloud Credits",
+  "amount": 20,
+  "scope": "cloud_purchase"
+}
+```
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "message": "Purchase authorized",
+  "transaction": {
+    "item": "Cloud Credits",
+    "amount": 20,
+    "authorizedBy": "user_123",
+    "agent": "agent_shopping_assistant"
+  }
+}
+```
+
+**Response (Failure):**
+```json
+{
+  "success": false,
+  "message": "Purchase rejected",
+  "reason": "Amount $100 exceeds limit of $50"
+}
+```
+
+## SDK Usage
+
+```typescript
+import { signToken, verifyToken } from '@/lib/agentauth';
+
+// Sign a token
+const token = signToken({
+  principal: 'user_123',
+  agent: 'agent_shopping_assistant',
+  scope: ['cloud_purchase'],
+  limit: 50,
+  currency: 'USD',
+  expiresAt: '2025-01-02T23:00:00.000Z',
+});
+
+// Verify a token
+const result = verifyToken(token, {
+  requiredScope: 'cloud_purchase',
+  amount: 20,
+});
+
+if (result.valid) {
+  console.log('Authorized by:', result.payload.principal);
+} else {
+  console.log('Rejected:', result.reason);
+}
+```
+
+## Tech Stack
+
+- **Next.js 14** - App Router, Server Actions
+- **TypeScript** - Type-safe SDK
+- **JWT** - Industry-standard token format (HS256)
+- **Tailwind CSS** - Utility-first styling
+
+## License
+
+MIT © 2025 AgentAuth
+
+---
+
+**Built for AI Build-Off 2025**

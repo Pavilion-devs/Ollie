@@ -12,15 +12,88 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-mono {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Grid Background Pattern */
+.bg-grid-pattern {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, #e5e5e5 1px, transparent 1px),
+    linear-gradient(to bottom, #e5e5e5 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+}
+
+/* Input Base Styling */
+.input-base {
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  transition: all 0.15s ease;
+  color: #171717;
+  font-size: 16px;
+}
+
+.input-base:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.1);
+}
+
+.input-base::placeholder {
+  color: #a3a3a3;
+}
+
+/* Custom Select */
+select.input-base {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23525252' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-in-delay-1 { opacity: 0; animation-delay: 0.1s; }
+.animate-in-delay-2 { opacity: 0; animation-delay: 0.15s; }
+.animate-in-delay-3 { opacity: 0; animation-delay: 0.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-in, .animate-in-delay-1, .animate-in-delay-2, .animate-in-delay-3 {
+    opacity: 1;
+    animation: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .bg-grid-pattern {
+    background-size: 30px 30px;
+    opacity: 0.4;
+  }
+}
+
+/* Pulse Animation */
+@keyframes pulse-emerald {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-emerald {
+  animation: pulse-emerald 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
