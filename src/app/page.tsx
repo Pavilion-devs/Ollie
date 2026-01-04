@@ -24,6 +24,12 @@ export default function Home() {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
+  // AI Parse states
+  const [aiDescription, setAiDescription] = useState('');
+  const [isParsing, setIsParsing] = useState(false);
+  const [parseError, setParseError] = useState('');
+  const [parsedByAI, setParsedByAI] = useState(false);
+
   const handleGenerateToken = async () => {
     setIsGenerating(true);
     setGeneratedToken('');
@@ -97,6 +103,52 @@ export default function Home() {
     setItemName('Premium Storage');
     setItemAmount(100);
     setRequiredScope('cloud_purchase');
+  };
+
+  const handleParseWithAI = async (description?: string) => {
+    const textToParse = description || aiDescription;
+    if (!textToParse.trim()) {
+      setParseError('Please enter a description');
+      return;
+    }
+
+    setIsParsing(true);
+    setParseError('');
+    setParsedByAI(false);
+
+    try {
+      const response = await fetch('/api/parse-authorization', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: textToParse }),
+      });
+      const data = await response.json();
+
+      if (data.success && data.parsed) {
+        // Auto-fill the form fields
+        setAgentId(`agent_${data.parsed.agent}`);
+        setScope(data.parsed.scope[0] || 'general');
+        setLimit(data.parsed.limit || 50);
+        setExpiresIn(data.parsed.durationMinutes || 60);
+        setParsedByAI(true);
+        setAiDescription('');
+
+        // Clear success message after 3 seconds
+        setTimeout(() => setParsedByAI(false), 3000);
+      } else {
+        setParseError(data.error || 'Failed to parse description');
+      }
+    } catch (error) {
+      setParseError('Network error - please try again');
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  const quickFillExamples = {
+    shopping: "Let my shopping assistant spend up to $50 on cloud services for the next hour",
+    email: "Allow email bot to read and send emails for 24 hours",
+    analytics: "Give my analytics agent access to view reports",
   };
 
   return (
@@ -227,6 +279,99 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* AI Quick Authorize Card */}
+            <div className="relative p-[1px] rounded-sm bg-gradient-to-b from-emerald-200 to-emerald-300 shadow-sm md:col-span-2">
+              <div className="bg-white rounded-[1px] p-6 sm:p-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                  <h4 className="text-lg font-medium text-neutral-900 tracking-tight">Quick Authorize with AI</h4>
+                  <span className="text-[9px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-sm border border-emerald-200 ml-auto">BETA</span>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-neutral-500 mb-1.5">Describe authorization in plain English</label>
+                    <textarea
+                      value={aiDescription}
+                      onChange={(e) => setAiDescription(e.target.value)}
+                      placeholder="e.g., 'Let my shopping assistant spend up to $50 on cloud services for the next hour'"
+                      className="w-full input-base px-3 py-3 rounded-sm text-sm min-h-[80px] resize-y"
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={() => handleParseWithAI()}
+                      disabled={isParsing}
+                      className="flex-1 bg-emerald-600 text-white px-4 py-3 text-xs font-semibold tracking-wide hover:bg-emerald-700 transition-colors rounded-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isParsing ? (
+                        <>
+                          <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Parsing...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          Parse with AI
+                        </>
+                      )}
+                    </button>
+
+                    {/* Quick-fill examples */}
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => handleParseWithAI(quickFillExamples.shopping)}
+                        className="px-3 py-2 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-sm hover:bg-emerald-100 transition-colors"
+                      >
+                        Shopping: $50 cloud
+                      </button>
+                      <button
+                        onClick={() => handleParseWithAI(quickFillExamples.email)}
+                        className="px-3 py-2 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-sm hover:bg-emerald-100 transition-colors"
+                      >
+                        Email: read & send
+                      </button>
+                      <button
+                        onClick={() => handleParseWithAI(quickFillExamples.analytics)}
+                        className="px-3 py-2 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-sm hover:bg-emerald-100 transition-colors"
+                      >
+                        Analytics: view
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Status messages */}
+                  {parsedByAI && (
+                    <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-sm p-3">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Parsed by AI - form fields filled below, review and edit as needed</span>
+                    </div>
+                  )}
+
+                  {parseError && (
+                    <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-sm p-3">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span>{parseError}</span>
+                    </div>
+                  )}
+
+                  <p className="text-[9px] text-neutral-400 text-center">Powered by OpenAI • Requires API key in environment variables</p>
+                </div>
+              </div>
+            </div>
+
             {/* Left Card - Authorize Agent */}
             <div className="relative p-[1px] rounded-sm bg-gradient-to-b from-neutral-200 to-neutral-300 shadow-sm">
               <div className="bg-white rounded-[1px] p-6 sm:p-8">
