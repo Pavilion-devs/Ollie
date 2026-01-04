@@ -2,17 +2,24 @@
 
 **Verifiable delegated authority for AI agents**
 
+> **Live Demo:** [https://agentauth.zeabur.app](https://agentauth.zeabur.app)
+
 In a world where AI agents act autonomously, merchants need to verify: who authorized this? what's the limit? who's liable? AgentAuth answers all three with JWT-based signed tokens that encode permissions, spending limits, and expiration times.
 
-## What It Does
+## Key Features
 
-AgentAuth enables users to grant AI agents specific, verifiable permissions to act on their behalf. Agents carry signed JWT tokens to merchants, who can verify:
+- **Agent Binding** - Tokens are cryptographically tied to specific agents, preventing token theft
+- **Scope-Based Permissions** - Fine-grained control over what actions agents can take
+- **Spending Limits** - Set maximum amounts for financial transactions
+- **Time-Bound Authorization** - Tokens expire automatically
+- **AI-Powered Authorization** - Natural language permission granting via OpenAI
+- **Multi-Agent Security** - Tokens cannot be shared or stolen between agents
 
-1. **Authorization** - Who granted permission (user principal)
-2. **Scope** - What actions are allowed (e.g., "cloud_purchase", "subscription")
-3. **Limits** - Maximum spending amount
-4. **Expiry** - Time-bound authorization
-5. **Integrity** - Cryptographically signed, tamper-proof
+## Live Demo
+
+- **Main App:** [https://agentauth.zeabur.app](https://agentauth.zeabur.app)
+- **Multi-Agent Demo:** [https://agentauth.zeabur.app/demo](https://agentauth.zeabur.app/demo)
+- **OpenAgents API:** [https://openagentsauth.zeabur.app](https://openagentsauth.zeabur.app)
 
 ## How It Works
 
@@ -26,12 +33,23 @@ AgentAuth enables users to grant AI agents specific, verifiable permissions to a
     │   - Set scopes                   │   - Check signature
     │   - Set limits                   │   - Validate scope
     │   - Get signed token             │   - Check amount <= limit
-    │                                  │   - Confirm not expired
+    │                                  │   - Verify agent identity
     └───────────┬──────────────────────┘
                 │
            2. Agent carries
               signed JWT token
 ```
+
+## Multi-Agent Security Demo
+
+The `/demo` page showcases AgentAuth's agent binding feature:
+
+1. **Shopping Agent** requests authorization and receives a token
+2. **Shopping Agent** makes a $20 purchase → **APPROVED**
+3. **Shopping Agent** shares token with **Analytics Agent**
+4. **Analytics Agent** tries to use the token → **BLOCKED**
+
+This demonstrates that tokens are bound to the issuing agent's identity - even with a valid token, another agent cannot impersonate the original.
 
 ## Quick Start
 
@@ -49,29 +67,20 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the demo.
 
-### Try the Demo
+### Run Multi-Agent Demo Locally
 
-1. **Authorize an Agent**
-   - Enter a user ID, agent ID, scope, and spending limit
-   - Click "Generate Token" to create a signed JWT
-   - Copy the token or use it directly in the merchant flow
+```bash
+# Terminal 1: Start Next.js
+npm run dev
 
-2. **Merchant Verification**
-   - The token auto-fills in the merchant verification form
-   - Enter an item name and amount
-   - Click "Attempt Purchase" to see verification in action
-   - Try the preset buttons: "Try $20 ✓" (success) or "Try $100 ✗" (exceeds limit)
-
-## Demo Flow
-
+# Terminal 2: Start OpenAgents service
+cd openagents-demo
+pip install -r requirements.txt
+export AGENTAUTH_API=http://localhost:3000
+python main.py
 ```
-1. User authorizes agent with $50 limit for "cloud_purchase"
-   ↓
-2. Agent receives signed JWT token
-   ↓
-3. Agent attempts $20 purchase → ✓ Approved
-4. Agent attempts $100 purchase → ✗ Rejected (exceeds $50 limit)
-```
+
+Then visit [http://localhost:3000/demo](http://localhost:3000/demo)
 
 ## API Endpoints
 
@@ -91,24 +100,6 @@ Generate a signed authorization token for an agent.
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "payload": {
-    "principal": "user_123",
-    "agent": "agent_shopping_assistant",
-    "scope": ["cloud_purchase"],
-    "limit": 50,
-    "currency": "USD",
-    "expiresAt": "2025-01-02T23:00:00.000Z",
-    "issuedAt": "2025-01-02T22:00:00.000Z",
-    "issuer": "AgentAuth"
-  }
-}
-```
-
 ### POST /api/purchase
 
 Verify a token and process a purchase request.
@@ -123,30 +114,19 @@ Authorization: Bearer <token>
 {
   "item": "Cloud Credits",
   "amount": 20,
-  "scope": "cloud_purchase"
+  "scope": "cloud_purchase",
+  "requestingAgent": "agent_shopping_assistant"
 }
 ```
 
-**Response (Success):**
-```json
-{
-  "success": true,
-  "message": "Purchase authorized",
-  "transaction": {
-    "item": "Cloud Credits",
-    "amount": 20,
-    "authorizedBy": "user_123",
-    "agent": "agent_shopping_assistant"
-  }
-}
-```
+### POST /api/parse-authorization
 
-**Response (Failure):**
+Parse natural language authorization into structured permissions (AI-powered).
+
+**Request:**
 ```json
 {
-  "success": false,
-  "message": "Purchase rejected",
-  "reason": "Amount $100 exceeds limit of $50"
+  "description": "Let my shopping assistant spend up to $50 on cloud services for the next hour"
 }
 ```
 
@@ -165,10 +145,11 @@ const token = signToken({
   expiresAt: '2025-01-02T23:00:00.000Z',
 });
 
-// Verify a token
+// Verify a token with agent binding
 const result = verifyToken(token, {
   requiredScope: 'cloud_purchase',
   amount: 20,
+  requestingAgent: 'agent_shopping_assistant', // Must match token's agent
 });
 
 if (result.valid) {
@@ -178,17 +159,40 @@ if (result.valid) {
 }
 ```
 
+## Architecture
+
+```
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── authorize/      # Token generation
+│   │   │   ├── purchase/       # Token verification
+│   │   │   └── parse-authorization/  # AI parsing
+│   │   ├── demo/              # Multi-agent demo page
+│   │   └── page.tsx           # Landing page
+│   └── lib/
+│       ├── agentauth.ts       # Core SDK
+│       └── types.ts           # TypeScript types
+├── openagents-demo/           # Python/OpenAgents service
+│   ├── main.py               # FastAPI backend
+│   └── requirements.txt
+└── zeabur.json               # Deployment config
+```
+
 ## Tech Stack
 
 - **Next.js 14** - App Router, Server Actions
 - **TypeScript** - Type-safe SDK
 - **JWT** - Industry-standard token format (HS256)
+- **OpenAgents** - Multi-agent framework (Python)
+- **FastAPI** - Python API backend
+- **OpenAI** - Natural language authorization parsing
 - **Tailwind CSS** - Utility-first styling
 
 ## License
 
-MIT © 2025 AgentAuth
+MIT
 
 ---
 
-**Built for AI Build-Off 2025**
+**Built for AI Build-Off 2025 - OpenAgents Track**
