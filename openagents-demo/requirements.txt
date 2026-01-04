@@ -1,0 +1,5 @@
+openagents
+fastapi
+uvicorn
+httpx
+python-dotenv

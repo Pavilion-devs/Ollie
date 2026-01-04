@@ -12,6 +12,7 @@ export interface AgentAuthPayload {
 export interface VerifyOptions {
   requiredScope: string;
   amount: number;
+  requestingAgent?: string; // The agent attempting to use the token
 }
 
 export interface VerifyResult {

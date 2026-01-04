@@ -164,12 +164,19 @@ export default function Home() {
             <span className="text-sm font-medium text-neutral-900 tracking-tight">AGENTAUTH</span>
           </div>
 
-          <a href="#demo" className="group relative rounded-sm p-[1px] bg-gradient-to-b from-neutral-200 to-neutral-300 hover:from-emerald-400 hover:to-emerald-500 transition-all duration-300">
-            <div className="relative h-full w-full bg-white/50 rounded-[1px] px-3 sm:px-4 py-2 flex items-center gap-2 backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span className="text-xs font-medium text-neutral-600 group-hover:text-black transition-colors">Try Demo</span>
-            </div>
-          </a>
+          <div className="flex items-center gap-3">
+            <a href="/demo" className="group relative rounded-sm p-[1px] bg-gradient-to-b from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 transition-all duration-300">
+              <div className="relative h-full w-full bg-white/50 rounded-[1px] px-3 sm:px-4 py-2 flex items-center gap-2 backdrop-blur-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-xs font-medium text-emerald-700 group-hover:text-emerald-800 transition-colors">Multi-Agent Demo</span>
+              </div>
+            </a>
+            <a href="#demo" className="group relative rounded-sm p-[1px] bg-gradient-to-b from-neutral-200 to-neutral-300 hover:from-neutral-300 hover:to-neutral-400 transition-all duration-300">
+              <div className="relative h-full w-full bg-white/50 rounded-[1px] px-3 sm:px-4 py-2 flex items-center gap-2 backdrop-blur-sm">
+                <span className="text-xs font-medium text-neutral-600 group-hover:text-black transition-colors">Try It</span>
+              </div>
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -197,9 +204,16 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6 w-full sm:w-auto animate-in animate-in-delay-3">
+            <div className="p-[1px] rounded-sm bg-gradient-to-b from-emerald-500 to-emerald-600 w-full sm:w-auto shadow-sm hover:from-emerald-600 hover:to-emerald-700 transition-all">
+              <a href="/demo" className="block hover:bg-emerald-700 transition-colors text-xs font-semibold text-white tracking-wide text-center bg-emerald-600 w-full h-full rounded-[1px] pt-3.5 pr-6 pb-3.5 pl-6 flex items-center justify-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse"></span>
+                MULTI-AGENT DEMO
+              </a>
+            </div>
+
             <div className="p-[1px] rounded-sm bg-gradient-to-b from-neutral-700 to-neutral-900 w-full sm:w-auto shadow-sm">
               <a href="#demo" className="block hover:bg-neutral-800 transition-colors text-xs font-semibold text-white tracking-wide text-center bg-neutral-900 w-full h-full rounded-[1px] pt-3.5 pr-6 pb-3.5 pl-6">
-                AUTHORIZE AN AGENT
+                TRY IT YOURSELF
               </a>
             </div>
 

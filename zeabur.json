@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "services": {
+    "agentauth-web": {
+      "type": "nextjs",
+      "root": ".",
+      "env": {
+        "JWT_SECRET": "@JWT_SECRET",
+        "OPENAI_API_KEY": "@OPENAI_API_KEY",
+        "NEXT_PUBLIC_AGENTS_API": "@NEXT_PUBLIC_AGENTS_API"
+      }
+    },
+    "agentauth-agents": {
+      "type": "python",
+      "root": "openagents-demo",
+      "start": "python main.py",
+      "env": {
+        "AGENTAUTH_API": "@AGENTAUTH_API",
+        "PORT": "8000"
+      }
+    }
+  }
+}

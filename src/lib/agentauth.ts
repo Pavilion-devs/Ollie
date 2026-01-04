@@ -29,6 +29,14 @@ export function verifyToken(token: string, options: VerifyOptions): VerifyResult
     return { valid: false, reason: 'Token has expired' };
   }
 
+  // Check if requesting agent matches the token's bound agent
+  if (options.requestingAgent && options.requestingAgent !== payload.agent) {
+    return {
+      valid: false,
+      reason: `Agent '${options.requestingAgent}' cannot use token issued to '${payload.agent}'`,
+    };
+  }
+
   // Check if requiredScope is in the scope array
   if (!payload.scope.includes(options.requiredScope)) {
     return { valid: false, reason: `Scope '${options.requiredScope}' not authorized` };

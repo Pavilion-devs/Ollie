@@ -15,10 +15,10 @@ export async function POST(request: NextRequest) {
 
   // Parse request body
   const body = await request.json();
-  const { item, amount, scope } = body;
+  const { item, amount, scope, requestingAgent } = body;
 
-  // Verify token
-  const result = verifyToken(token, { requiredScope: scope, amount });
+  // Verify token (with optional agent binding check)
+  const result = verifyToken(token, { requiredScope: scope, amount, requestingAgent });
 
   if (!result.valid) {
     return NextResponse.json(
